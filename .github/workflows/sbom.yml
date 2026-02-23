@@ -1,61 +1,38 @@
-name: SBOM (Syft)
+name: Generate SBOM
 
 on:
   push:
     branches: ["main"]
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
-  sbom_artifact:
-    name: Generate SBOM (artifact)
-    if: github.event_name != 'release'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        
-      - name: Generate SBOM (CycloneDX JSON)
-        uses: anchore/sbom-action@v0
-        with:
-          format: cyclonedx-json
-          output-file: hmf-ics-sbom.cdx.json
-          dependency-snapshot: false
-
-      - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: hmf-ics-sbom
-          path: hmf-ics-sbom.cdx.json
-          if-no-files-found: error
-
-  sbom_release_asset:
-    name: Generate SBOM (release asset)
-    if: github.event_name == 'release'
+  sbom:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        
-      - name: Generate SBOM (CycloneDX JSON)
-        uses: anchore/sbom-action@bb716408e75840bbb01e839347cd213767269d4a
-        with:
-          format: cyclonedx-json
-          output-file: hmf-ics-sbom.cdx.json
-          dependency-snapshot: false
 
-      - name: Upload SBOM artifact
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Syft
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Generate SBOM (CycloneDX JSON)
+        run: syft dir:. -o cyclonedx-json=hmf-ics-sbom.cdx.json
+
+      - name: Upload SBOM as artifact
         uses: actions/upload-artifact@v4
         with:
           name: hmf-ics-sbom
           path: hmf-ics-sbom.cdx.json
           if-no-files-found: error
 
-      - name: Attach SBOM to GitHub Release
+      - name: Attach SBOM to release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: hmf-ics-sbom.cdx.json
