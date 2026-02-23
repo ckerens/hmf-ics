@@ -1,0 +1,32 @@
+syntax = "proto3";
+package hmf.v1;
+
+import "common.proto";
+
+message Config {
+  oneof payload {
+    ConfigQuery    query    = 1;
+    ConfigSnapshot snapshot = 2;
+    ConfigUpdate   update   = 3;
+    Ack            ack      = 4;
+    Result         result   = 5;
+  }
+}
+
+message ConfigQuery {
+  // If keys is empty, the receiver may return a full snapshot.
+  repeated string keys = 1;
+}
+
+message ConfigSnapshot {
+  uint64 config_version = 1;
+
+  map<string, string> params = 2;
+}
+
+message ConfigUpdate {
+  string update_id = 1;
+  bool   strict    = 2;
+
+  map<string, string> params = 3;
+}

@@ -1,0 +1,14 @@
+[package]
+name = "hmf-transport"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/ckerens/hmf-ics"
+description = "Transport abstractions and networking implementations for HMF-ICS."
+keywords = ["ics", "networking", "transport", "industrial"]
+categories = ["network-programming"]
+
+[dependencies]
+hmf-core = { path = "../hmf-core" }
+hmf-wire-proto = { path = "../hmf-wire-proto" }
+thiserror = "2"

@@ -1,0 +1,16 @@
+[package]
+name = "hmf-core"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/ckerens/hmf-ics"
+description = "Core protocol types, validation logic, and security primitives for HMF-ICS."
+keywords = ["ics", "scada", "protocol", "security", "industrial"]
+categories = ["network-programming", "embedded", "cryptography"]
+
+[dependencies]
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+rand = "0.8"
+sha2 = "0.10"
+thiserror = "2"
+zeroize = "1"

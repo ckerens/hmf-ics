@@ -1,0 +1,16 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/hmf-core",
+    "crates/hmf-wire-proto",
+    "crates/hmf-transport",
+    "bins/hmf-device",
+    "bins/hmf-warden",
+]
+
+[workspace.package]
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/<your-username>/hmf-ics"
+authors = ["Christopher D. Kerens"]
+rust-version = "1.75"

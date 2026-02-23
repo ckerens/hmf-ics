@@ -1,0 +1,24 @@
+syntax = "proto3";
+package hmf.v1;
+
+import "common.proto";
+
+message Command {
+  oneof payload {
+    CommandRequest request = 1;
+    Ack     ack     = 2;
+    Result  result  = 3;
+  }
+}
+
+message CommandRequest {
+  string request_id = 1;
+  string command    = 2;
+  string target     = 3;
+
+  map<string, string> params = 4;
+
+  bytes blob = 5;
+
+  bool requires_confirmation = 6;
+}

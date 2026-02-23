@@ -1,0 +1,18 @@
+[package]
+name = "hmf-wire-proto"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/ckerens/hmf-ics"
+description = "Protobuf wire definitions and generated bindings for HMF-ICS."
+keywords = ["ics", "protobuf", "protocol", "scada"]
+categories = ["network-programming", "encoding"]
+
+[dependencies]
+hmf-core = { path = "../hmf-core" }
+thiserror = "2"
+prost = "0.14"
+bytes = "1"
+
+[build-dependencies]
+prost-build = "0.14"

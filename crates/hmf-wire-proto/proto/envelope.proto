@@ -1,0 +1,60 @@
+syntax = "proto3";
+package hmf.v1;
+
+import "telemetry.proto";
+import "command.proto";
+import "config.proto";
+import "engineering.proto";
+
+message Envelope {
+  // ---- Header (v0.1.2 core) ----
+  uint32          proto_ver        = 1;
+  MsgClass        msg_class        = 2;
+  string          sender_id        = 3;
+  string          sender_instance  = 4;
+  uint64          counter          = 5;
+  uint32          ttl_ms           = 6;
+  string          transaction_id   = 7;
+  string          idempotency_key  = 8;
+  DeliveryProfile delivery_profile = 9;
+
+  // routing hints
+  string topic  = 10;
+  string target = 11;
+  string scope  = 12;
+
+  // ---- Payload ----
+  oneof payload {
+    Telemetry   telemetry   = 20;
+    Command     command     = 21;
+    Config      config      = 22;
+    Engineering engineering = 23;
+  }
+
+  // ---- Security ----
+  SigAlg sig_alg      = 30;
+  bytes  signature    = 31;
+  string key_id       = 32;
+  bytes  auth_context = 33;
+}
+
+enum MsgClass {
+  MSG_CLASS_UNSPECIFIED = 0;
+  TELEMETRY             = 1;
+  COMMAND               = 2;
+  CONFIG                = 3;
+  ENGINEERING           = 4;
+}
+
+enum DeliveryProfile {
+  DELIVERY_PROFILE_UNSPECIFIED = 0;
+  BEST_EFFORT                   = 1;
+  AT_LEAST_ONCE                 = 2;
+  ORDERED_RELIABLE              = 3;
+  CRITICAL_EXEC                 = 4;
+}
+
+enum SigAlg {
+  SIG_ALG_UNSPECIFIED = 0;
+  ED25519            = 1;
+}

@@ -1,0 +1,49 @@
+# =========================
+# Rust / Cargo
+# =========================
+
+# Compiled output
+/target/
+
+# Backup files
+**/*.rs.bk
+
+# Cargo lockfile
+# Keep Cargo.lock for binaries, ignore for libraries if publishing.
+# Since this is an application/workspace, we keep it.
+# Comment this out only if you turn this into a published library.
+# /Cargo.lock
+
+# =========================
+# Protobuf / build artifacts
+# =========================
+
+# Generated build script output (handled inside target, but explicit doesn't hurt)
+/**/out/
+
+# =========================
+# IDE / Editor
+# =========================
+
+# VSCode
+.vscode/
+
+# JetBrains
+.idea/
+
+# Vim
+*.swp
+*.swo
+
+# =========================
+# OS junk
+# =========================
+
+.DS_Store
+Thumbs.db
+
+# =========================
+# WSL / misc
+# =========================
+
+*.log

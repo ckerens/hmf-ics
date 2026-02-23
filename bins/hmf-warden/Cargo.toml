@@ -1,0 +1,17 @@
+[package]
+name = "hmf-warden"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/ckerens/hmf-ics"
+description = "Authority and security coordination component for the HMF-ICS protocol."
+keywords = ["ics", "security", "scada", "authority"]
+categories = ["network-programming", "cryptography"]
+
+[dependencies]
+hmf-core = { path = "../../crates/hmf-core" }
+hmf-transport = { path = "../../crates/hmf-transport" }
+anyhow = "1"
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+rand = "0.8"
+sha2 = "0.10"
