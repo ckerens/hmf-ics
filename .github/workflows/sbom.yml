@@ -1,0 +1,49 @@
+name: SBOM (Syft)
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  sbom_artifact:
+    name: Generate SBOM (artifact)
+    if: github.event_name != 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate SBOM (CycloneDX JSON)
+        uses: anchore/sbom-action@bb716408e75840bbb01e839347cd213767269d4a
+        with:
+          path: .
+          format: cyclonedx-json
+          artifact-name: hmf-ics.cdx.json
+          upload-artifact: true
+          dependency-snapshot: false
+
+  sbom_release_asset:
+    name: Generate SBOM (release asset)
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate SBOM (SPDX JSON) and attach to Release
+        uses: anchore/sbom-action@bb716408e75840bbb01e839347cd213767269d4a
+        with:
+          path: .
+          format: spdx-json
+          artifact-name: hmf-ics.spdx.json
+          upload-artifact: true
+          upload-release-assets: true
+          dependency-snapshot: false
