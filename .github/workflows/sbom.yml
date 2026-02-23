@@ -3,8 +3,6 @@ name: SBOM (Syft)
 on:
   push:
     branches: ["main"]
-  pull_request:
-  workflow_dispatch:
   release:
     types: [published]
 
@@ -19,22 +17,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         
-      - name: Create sbom directory
-        run: mkdir -p sbom
-        
       - name: Generate SBOM (CycloneDX JSON)
-        uses: anchore/sbom-action@bb716408e75840bbb01e839347cd213767269d4a
+        uses: anchore/sbom-action@v0
         with:
-          path: .
           format: cyclonedx-json
-          output-file: sbom/hmf-ics.cdx.json
+          output-file: hmf-ics-sbom.cdx.json
           dependency-snapshot: false
 
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sbom-cyclonedx
-          path: sbom/hmf-ics.cdx.json
+          name: hmf-ics-sbom
+          path: hmf-ics-sbom.cdx.json
           if-no-files-found: error
 
   sbom_release_asset:
@@ -47,25 +41,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         
-      - name: Create sbom directory
-        run: mkdir -p sbom
-        
       - name: Generate SBOM (CycloneDX JSON)
         uses: anchore/sbom-action@bb716408e75840bbb01e839347cd213767269d4a
         with:
-          path: .
           format: cyclonedx-json
-          output-file: sbom/hmf-ics.cdx.json
+          output-file: hmf-ics-sbom.cdx.json
           dependency-snapshot: false
 
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sbom-cyclonedx
-          path: sbom/hmf-ics.cdx.json
+          name: hmf-ics-sbom
+          path: hmf-ics-sbom.cdx.json
           if-no-files-found: error
 
       - name: Attach SBOM to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: sbom/hmf-ics.cdx.json
+          files: hmf-ics-sbom.cdx.json
