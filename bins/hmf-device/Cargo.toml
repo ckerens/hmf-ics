@@ -13,5 +13,5 @@ hmf-core = { path = "../../crates/hmf-core" }
 hmf-transport = { path = "../../crates/hmf-transport" }
 anyhow = "1"
 ed25519-dalek = { version = "2", features = ["rand_core"] }
-rand = "0.8"
+rand = "0.10"
 sha2 = "0.10"
