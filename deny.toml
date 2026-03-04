@@ -1,26 +1,23 @@
 # deny.toml — cargo-deny configuration for HMF-ICS
 
 [advisories]
-# Fail CI on known vulnerabilities.
-vulnerability = "deny"
+# Vulnerability + notice advisories are DENY by default in newer cargo-deny.
+# Use `ignore` to suppress specific advisories if needed.
 
-# Check for unmaintained crates. Values are:
-# "all" | "workspace" | "transitive" | "none"
 unmaintained = "all"
-
-# These are usually noise early on — surface as warnings.
-yanked = "warn"
-notice = "warn"
-
-# Unsound advisories are rare but important; warn for now (tighten later if desired).
 unsound = "all"
+
+# Yanked crates are usually noise early on; keep as warning.
+yanked = "warn"
+
+# (Optional) add ignores later if cargo-deny flags something you accept temporarily:
+# ignore = [
+#   { id = "RUSTSEC-0000-0000", reason = "explain why not applicable" },
+# ]
 
 [licenses]
 # Start permissive: allow common OSS licenses. Tighten later if needed.
 allow = ["Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib"]
-
-# Deny strong copyleft by default.
-deny = ["GPL-2.0", "GPL-3.0", "AGPL-3.0", "LGPL-2.1", "LGPL-3.0"]
 
 # Some crates don’t declare licenses perfectly; warn instead of failing initially.
 confidence-threshold = 0.8
