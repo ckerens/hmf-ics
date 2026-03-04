@@ -1,21 +1,19 @@
 # deny.toml — cargo-deny configuration for HMF-ICS
 
 [advisories]
-# Fail the check if any vulnerability is found.
-deny = ["vulnerability"]
+# Fail CI on known vulnerabilities.
+vulnerability = "deny"
 
-# How to handle unmaintained crates:
-# - "all" checks everything
-# - "workspace" checks only workspace members
-# - "transitive" checks dependencies only
-# - "none" disables the unmaintained check
+# Check for unmaintained crates. Values are:
+# "all" | "workspace" | "transitive" | "none"
 unmaintained = "all"
 
-# Yanked crates are usually noise early on; surface but don't fail the build.
+# These are usually noise early on — surface as warnings.
 yanked = "warn"
-
-# Informational notices
 notice = "warn"
+
+# Unsound advisories are rare but important; warn for now (tighten later if desired).
+unsound = "warn"
 
 [licenses]
 # Start permissive: allow common OSS licenses. Tighten later if needed.
