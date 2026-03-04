@@ -3,7 +3,7 @@ use std::net::TcpListener;
 use anyhow::Result;
 use ed25519_dalek::SigningKey;
 
-use hmf_core::envelope::{DeliveryProfile, MsgClass, sign::verify_envelope_ed25519};
+use hmf_core::envelope::sign::verify_envelope_ed25519;
 use hmf_transport::transport::tcp::read_record;
 
 const DEVICE1_SK_BYTES: [u8; 32] = [7u8; 32];
