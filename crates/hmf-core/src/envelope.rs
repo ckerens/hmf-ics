@@ -44,6 +44,12 @@ pub struct EnvelopeBuilder<R, I, C, D> {
     _del: std::marker::PhantomData<D>,
 }
 
+impl Default for EnvelopeBuilder<Unset, Unset, Unset, Unset> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EnvelopeBuilder<Unset, Unset, Unset, Unset> {
     pub fn new() -> Self {
         Self {
