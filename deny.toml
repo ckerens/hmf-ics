@@ -16,8 +16,15 @@ yanked = "warn"
 # ]
 
 [licenses]
-# Start permissive: allow common OSS licenses. Tighten later if needed.
-allow = ["Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib"]
+allow = [
+    "Apache-2.0",
+    "MIT",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+]
 
 # Some crates don’t declare licenses perfectly; warn instead of failing initially.
 confidence-threshold = 0.8
