@@ -13,7 +13,7 @@ yanked = "warn"
 notice = "warn"
 
 # Unsound advisories are rare but important; warn for now (tighten later if desired).
-unsound = "warn"
+unsound = "all"
 
 [licenses]
 # Start permissive: allow common OSS licenses. Tighten later if needed.
