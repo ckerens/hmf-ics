@@ -1,0 +1,41 @@
+# deny.toml — cargo-deny configuration for HMF-ICS
+
+[advisories]
+# Vulnerability + notice advisories are DENY by default in newer cargo-deny.
+# Use `ignore` to suppress specific advisories if needed.
+
+unmaintained = "all"
+unsound = "all"
+
+# Yanked crates are usually noise early on; keep as warning.
+yanked = "warn"
+
+# (Optional) add ignores later if cargo-deny flags something you accept temporarily:
+# ignore = [
+#   { id = "RUSTSEC-0000-0000", reason = "explain why not applicable" },
+# ]
+
+[licenses]
+allow = [
+    "Apache-2.0",
+    "MIT",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+]
+
+# Some crates don’t declare licenses perfectly; warn instead of failing initially.
+confidence-threshold = 0.8
+
+[bans]
+# Avoid duplicate versions where possible.
+multiple-versions = "warn"
+# Allow wildcard dependencies. Prefer explicit versions.
+wildcards = "allow"
+
+[sources]
+# Allow crates.io and git (for now).
+unknown-registry = "deny"
+unknown-git = "allow"
