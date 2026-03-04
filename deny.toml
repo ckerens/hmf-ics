@@ -1,0 +1,32 @@
+# deny.toml — cargo-deny configuration for HMF-ICS
+
+[advisories]
+# Deny vulnerabilities in dependencies.
+vulnerability = "deny"
+# Allow unmaintained crates for now (some ecosystems have unavoidable ones).
+unmaintained = "warn"
+# Allow yanked crates for now (noise early on; tighten later).
+yanked = "warn"
+# Informational notices.
+notice = "warn"
+
+[licenses]
+# Start permissive: allow common OSS licenses. Tighten later if needed.
+allow = ["Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib"]
+
+# Deny strong copyleft by default.
+deny = ["GPL-2.0", "GPL-3.0", "AGPL-3.0", "LGPL-2.1", "LGPL-3.0"]
+
+# Some crates don’t declare licenses perfectly; warn instead of failing initially.
+confidence-threshold = 0.8
+
+[bans]
+# Avoid duplicate versions where possible.
+multiple-versions = "warn"
+# Allow wildcard dependencies. Prefer explicit versions.
+wildcards = "allow"
+
+[sources]
+# Allow crates.io and git (for now).
+unknown-registry = "deny"
+unknown-git = "allow"
