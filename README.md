@@ -1,281 +1,176 @@
 # Hardened Management Fabric for Industrial Control Systems (HMF-ICS)
 
-**HMF-ICS** is an open, security-first protocol and reference
-implementation for industrial control environments.
+> **Status:** Security research / engineering project (not production-ready).
 
-This repository defines a protobuf-first wire contract and a Rust
-implementation of a management and enforcement fabric designed
-specifically for OT/ICS systems.
+HMF-ICS is a security-first OT/ICS protocol and reference implementation for environments where operational reliability and security must coexist under real-world industrial constraints.
 
-------------------------------------------------------------------------
+Industrial control systems operate under conditions that differ fundamentally from typical IT systems:
 
-## Why This Exists
+- Devices operate for decades
+- Connectivity may be intermittent or segmented
+- Control loops cannot depend on central services
+- Safety and traceability requirements are strict
+- Network trust assumptions are weak or incorrect
 
-This is an academic engineering project with the purpose of better
-understanding the OT/ICS security landscape.
+HMF-ICS explores what an OT protocol looks like when **security correctness, deterministic behavior, and partition tolerance are treated as first-order architectural requirements rather than operational add-ons.**
 
-My learning process strongly favors authentic problems --- So, I did
-what any engineer would do — I started writing a protocol.
+This repository defines:
 
-OT/ICS environments impose constraints that are structurally different
-from typical IT systems:
+- A protocol specification
+- A reference architecture
+- Security invariants and threat model
+- A Rust reference implementation
 
--   Long-lived devices
--   Deterministic operational requirements
--   Intermittent or segmented connectivity
--   Partition risk
--   Slow DoS susceptibility
--   High audit and traceability requirements
--   Safety implications
+The goal is not to build a SCADA platform or monitoring product, but to demonstrate a **secure control coordination fabric** suitable for industrial environments.
 
-Rather than layering security onto an existing messaging model, this
-project explores what a protocol would look like if operational security
-and reliability were first-order design constraints.
+---
 
-------------------------------------------------------------------------
+## What makes this interesting
 
-## What This Is
+- **Receiver-enforced validation** — endpoints independently verify freshness, identity, authorization, and replay protection before any state change occurs.
+- **Control-loop independence from authority services** — routine operations continue even if enrollment or policy infrastructure is unavailable.
+- **Cryptographically attributable audit events** — security-relevant actions produce signed evidence at the point of physical effect.
 
-HMF-ICS is:
+---
 
--   A protocol specification (protobuf-first wire contract)
--   A reference architecture
--   A Rust workspace implementing core roles
--   A structured experiment in secure authority and degradation
-    semantics
+## Security invariants
 
-It is not:
+HMF-ICS is built around receiver-enforced security invariants. If any invariant is violated, the system is considered insecure even if functionality appears correct.
 
--   A production-ready ICS platform
--   A monitoring product
--   A wrapper around MQTT or another broker
--   A vendor positioning exercise
+- **Explicit authority only:** Authority is explicit, cryptographically bound, verifiable by the receiver, scope-limited, and time-bounded. Network position does not grant privilege.
+- **Message-level authentication:** Every state-changing message is signed and verified before semantic processing. Transport security alone is insufficient to establish trust.
+- **Receiver-enforced freshness:** Receivers reject messages that exceed TTL, regress counters, or duplicate idempotency identity within the enforcement window. Freshness does not depend on sender wall-clock time.
+- **Deterministic validation order:** Security validation occurs before execution. No side effects occur prior to full validation.
+- **No algorithm downgrade:** Implementations do not negotiate weaker algorithms or silently fallback. Cryptographic changes require a protocol version increment.
+- **Discovery is sensitive:** Enumeration of topology and authority metadata requires explicit authorization.
+- **Partition-safe degradation:** Loss of dependencies reduces privilege, not expands it. Instability does not relax authorization.
+- **No implicit trust from infrastructure:** Compromise of VPNs, gateways, firewalls, proxies, or cloud ingress does not confer protocol authority — all protocol decisions remain independently verifiable.
+- **Identity integrity:** Device identity is unique and resistant to cloning within the deployment threat model. Sender instance reuse without reset semantics is prohibited for state-changing operations.
 
-This is a ground-up design exploration.
+---
 
-------------------------------------------------------------------------
+## Architectural Model
 
-## Core Design Principles
+HMF-ICS separates responsibilities into explicit planes:
 
-### 1. Security Is Structural
+| Plane | Responsibility |
+| ------ | ---------------- |
+| **Data plane** | Direct operational communication between endpoints (e.g., HMI ↔ PLC) |
+| **Control plane** | Site-local authority for enrollment, policy distribution, and revocation |
+| **Event & audit plane** | Durable, signed receipts and security events |
+| **Read plane** | Operator-facing projections and analytics views |
 
-Security properties are embedded into the envelope and protocol
-semantics.
+The separation ensures that:
 
-Every message is structured to support:
+- routine operations continue during control-plane outages
+- authority mutation does not sit in the control loop
+- audit evidence is produced at the point of physical effect
 
--   Protocol versioning
--   Scoped authority boundaries
--   Monotonic counters
--   TTL enforcement
--   Transaction identifiers
--   Delivery profiles
--   Signed security fields
+---
 
-Some of these mechanisms are implemented; others are defined in the wire
-contract and under active development.
+## Core Security Properties
 
-------------------------------------------------------------------------
+All state-changing messages follow a deterministic validation pipeline enforced by the receiver.
 
-### 2. Authority Is Explicit and Time-Bounded
+Receivers enforce, in strict order:
 
-Authority is scoped and intentionally constrained.
+1. Structural validation
+2. Freshness enforcement (TTL using receiver-local time)
+3. Signature verification (Ed25519)
+4. Replay protection via monotonic counters
+5. Idempotency enforcement
+6. Authorization
+7. Execution
+8. Audit emission
 
-Devices operate within:
+No side effects occur until validation succeeds.
 
--   A defined **Authority Domain**
--   Explicit scope validation
--   Deterministic fallback behavior when authority becomes stale or
-    invalid
+This model prevents entire classes of failures common in broker-centric messaging systems.
 
-Secure degradation is treated as a required behavior, not an edge case.
+---
 
-------------------------------------------------------------------------
+## Envelope-Centric Security
 
-### 3. Devices Participate in Enforcement
+Every message carries a signed envelope containing:
 
-Devices are not passive endpoints.
+- **Identity** (`sender_id`, `sender_instance`)
+- **Freshness** (`counter`, `ttl_ms`)
+- **Routing context** (`scope`, `target`, `topic`)
+- **Correlation** (`transaction_id`, `idempotency_key`)
+- **Security metadata** (`key_id`, `signature`, `auth_context`)
 
-They:
+Security-relevant routing fields are **signature-bound**, preventing tampering by intermediate infrastructure.
 
--   Validate scope and authority
--   Enforce policy locally
--   Maintain monotonic counters
--   Emit lifecycle telemetry
--   Reject stale or invalid commands
+Transport security protects the channel.
 
-Control integrity is not assumed to exist at a single central node.
+The **envelope signature establishes authority.**
 
-------------------------------------------------------------------------
+---
 
-### 4. Auditability Is First-Class
+## Authority Model
 
-HMF-ICS supports:
+HMF-ICS assumes **no implicit trust from infrastructure**.
 
--   Transaction IDs
--   Idempotency keys
--   Ordered delivery profiles
--   Correlatable request/ack/result flows
+Authority is:
 
-The protocol is designed to make reconstruction and analysis
-straightforward.
+- cryptographically bound
+- explicit
+- scope-limited
+- time-bounded
+- locally enforceable
 
-------------------------------------------------------------------------
+Each endpoint possesses a unique Ed25519 signing key.
 
-### 5. Reliability Before Feature Density
+A site-local **Warden** manages:
 
-The architecture prioritizes:
+- enrollment
+- policy issuance
+- revocation
 
--   Deterministic behavior
--   Partition tolerance
--   Explicit TTL handling
--   Clear failure semantics
+Loss of Warden availability reduces privilege but **does not halt routine operations.**
 
-Feature growth is secondary to correctness.
-
-------------------------------------------------------------------------
-
-## Roles and Terminology
-
-### Warden
-
-The authority node responsible for:
-
--   Policy issuance
--   Command authorization
--   Domain enforcement
--   Security validation
-
-A Warden governs a defined **Authority Domain**.
-
-------------------------------------------------------------------------
-
-### Authority Domain
-
-A scoped control boundary, such as:
-
--   `zone:cellA`
--   `site:plant7`
--   `control_center:east`
-
-Messages are validated against domain scope.
-
-------------------------------------------------------------------------
-
-### Device
-
-An enforcement participant that:
-
--   Emits telemetry
--   Validates commands
--   Enforces policy locally
--   Maintains monotonic counters
--   Degrades deterministically if authority becomes invalid
-
-------------------------------------------------------------------------
-
-### Operator
-
-A human principal interacting via authenticated tooling.
-
-Operators operate through protocol guarantees --- not around them.
-
-------------------------------------------------------------------------
-
-## Protocol Architecture
-
-HMF-ICS is envelope-centric.
-
-Each message is wrapped in an `Envelope` that includes:
-
--   `proto_ver`
--   `msg_class`
--   `sender_id`
--   `sender_instance`
--   `counter`
--   `ttl_ms`
--   `transaction_id`
--   `idempotency_key`
--   `delivery_profile`
--   `scope`
--   `target`
--   `topic`
--   Security metadata
-
-Payloads are defined using protobuf `oneof` structures.
-
-Current payload categories include:
-
--   Telemetry
--   Command
--   Configuration
--   Engineering actions
-
-The protobuf schema is the canonical contract.
-
-------------------------------------------------------------------------
+---
 
 ## Repository Structure
 
-This repository is a Rust workspace:
+```text
+crates/
+  hmf-core/         Protocol semantics, validation, replay, signing
+  hmf-wire-proto/   Protobuf schema and encoding
+  hmf-transport/    TLS / QUIC adapters
 
-    crates/
-      hmf-core/         → Core validation, signing, shared logic
-      hmf-transport/    → Transport abstractions and implementations
-      hmf-wire-proto/   → Protobuf schemas + generated Rust types
+bins/
+  hmf-device/       Reference PLC-style endpoint
+  hmf-operator/     Reference HMI endpoint
+  hmf-warden/       Reference authority
 
-    bins/
-      hmf-device/       → Demo device implementation
-      hmf-operator/     → Operator simulator
-      hmf-warden/       → Warden reference implementation
-
-The binaries are minimal reference implementations used to exercise and
-validate the protocol. They demonstrate current implementation status
-rather than representing production-ready components.
-
-------------------------------------------------------------------------
-
-## Current Status
-
-Early-stage, functional in limited paths.
-
-Implemented:
-
--   Protobuf wire contract
--   Envelope structure and parsing
--   Telemetry message flow
--   Transport abstraction layer
--   Reference binaries for exercising protocol paths
-
-Defined in schema but not yet fully enforced:
-
--   Monotonic counter validation
--   Lease / authority expiration semantics
--   Full Warden-side authority enforcement
--   Complete command lifecycle validation
-
-This project is actively evolving. Expect iteration and structural
-refinement as security semantics are hardened.
-
-------------------------------------------------------------------------
-
-## Build Requirements
-
-Ubuntu / WSL example:
-
-``` bash
-sudo apt update
-sudo apt install -y build-essential protobuf-compiler
 ```
 
-Install Rust (via rustup), then:
+The binaries exercise protocol invariants and validation flows.
+They are reference implementations, not production components.
 
-``` bash
-cargo check
-```
+---
 
-------------------------------------------------------------------------
+## Project Status
+
+Active development.
+
+Current implementation includes:
+
+- canonical signing model
+- receiver validation pipeline
+- replay protection primitives
+- initial HMI ↔ PLC command path
+
+Current focus:
+
+- capability enforcement
+- durable replay state
+- expanded negative-path testing
+- simulation environment for protocol behavior
+
+---
 
 ## License
 
-Licensed under the Apache License, Version 2.0.
+Apache License 2.0
