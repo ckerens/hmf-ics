@@ -31,3 +31,6 @@ jobs:
 
       - name: Test
         run: cargo test --all
+
+      - name: Docs
+        run: cargo doc --workspace --no-deps
