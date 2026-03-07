@@ -1,5 +1,6 @@
 # Work Item Template
 
+Work Item ID: WI-XXXX
 Status: Draft
 
 This template defines the structure for implementation work items in HMF-ICS.
@@ -31,6 +32,39 @@ Include:
 
 ---
 
+## Spec Anchors
+
+Relevant normative requirements.
+
+Examples:
+
+- REQ-TTL-001
+- REQ-SIG-004
+
+---
+
+## Invariant Anchors
+
+Relevant system invariants.
+
+Examples:
+
+- INV-PIPE-001
+- INV-LAYER-002
+
+---
+
+## Scope
+
+Files/modules that may be modified.
+
+Example:
+
+- hmf-core/src/security/validation.rs
+- tests/security/
+
+---
+
 ## Normative Impact
 
 Indicate whether the protocol specification changes.
@@ -49,11 +83,9 @@ Define conditions that must be true for the work to be considered complete.
 
 Example:
 
-- Message type implemented in `hmf-core`
-- Serialization support added to `hmf-wire-proto`
-- Validation rules enforced
+- Validation rejects ttl_ms == 0
 - Unit tests added
-- Serialization round-trip tests added
+- Round-trip tests added
 
 ---
 
@@ -66,6 +98,19 @@ Example:
 - Changes to canonical signing bytes
 - New cryptographic algorithms
 - Architectural refactors
+
+---
+
+## Escalation Triggers
+
+Conditions that require halting work.
+
+Examples:
+
+- specification ambiguity
+- invariant conflict
+- acceptance criteria insufficient
+- scope insufficient
 
 ---
 
