@@ -27,10 +27,20 @@ docs/adr/
 
 ---
 
+## Role in AI-Orchestrated Development
+
+Work items act as the execution units used by the agent orchestration framework.
+
+Planner agents generate work items.
+Implementer agents execute them.
+Guardian and Spec Sync agents validate results.
+
+---
+
 ## Relationship to Other Documents
 
 | Artifact | Purpose |
-|--------|--------|
+| -------- | -------- |
 | `docs/02-protocol` | Normative protocol specification |
 | `docs/adr` | Architecture decision records |
 | `docs/invariants.md` | Non-negotiable system constraints |

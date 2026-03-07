@@ -55,9 +55,13 @@ docs/
 
 ## Core Architectural Invariants
 
-The following invariants MUST NOT be violated.
+The canonical invariant catalog is defined in:
 
-If a requested change would break these constraints, the agent must halt and request clarification.
+docs/invariants.md
+
+Agents MUST treat this document as the authoritative source of architectural invariants and MUST preserve all `INV-*` constraints defined there.
+
+If a requested change would violate any invariant, the agent must halt and request clarification.
 
 ### 1. Protocol Specification Is the Source of Truth
 
@@ -139,6 +143,40 @@ HMF-ICS assumes the following operational constraints:
 - Consensus or quorum mechanisms are out of scope for v1.
 
 Agents must not introduce features that violate these guardrails.
+
+---
+
+## Specification Anchors (`REQ-*` and `INV-*`)
+
+The repository uses stable identifiers for requirements and invariants.
+
+Agents MUST reference these identifiers when implementing, reviewing, or modifying behavior.
+
+Identifier types:
+
+- `REQ-*` — normative implementation requirements
+- `INV-*` — architectural invariants
+
+Usage rules:
+
+- Work items MUST reference relevant `REQ-*` and `INV-*` anchors.
+- Code changes SHOULD reference relevant anchors in comments where appropriate.
+- Tests SHOULD reference the requirement or invariant they validate.
+- Pull requests SHOULD list implemented or preserved identifiers.
+
+Example:
+
+Implements:
+
+- REQ-SIG-003
+- REQ-SIG-004
+
+Preserves:
+
+- INV-PIPE-001
+- INV-SIGN-001
+
+If an agent cannot identify a valid requirement or invariant anchor for a change, the agent MUST stop and request clarification.
 
 ---
 
@@ -335,6 +373,28 @@ Agents must add tests for:
 - negative cases
 
 Security-relevant changes require both positive and negative tests.
+
+### Required local checks before opening a PR
+
+Agents SHOULD keep the feedback loop local. CI is the final gate, but it should rarely fail for avoidable reasons.
+
+For changes that affect Rust code (including build scripts and protobufs), agents MUST run the following checks locally and fix failures before opening a PR:
+
+```bash
+cargo fmt
+cargo clippy --all-targets -- -D warnings
+cargo test --all
+cargo doc --workspace --no-deps
+```
+
+For documentation-only changes, agents SHOULD still run at least:
+
+```bash
+cargo fmt
+cargo doc --workspace --no-deps
+```
+
+If the change modifies protobuf definitions or `build.rs` behavior, ensure `protoc` is available in the environment (CI installs it). If local tooling differs, note it in the PR description.
 
 ---
 
