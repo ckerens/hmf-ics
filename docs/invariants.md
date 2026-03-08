@@ -16,6 +16,25 @@ If any security invariant is violated, the system is considered insecure even if
 
 ---
 
+## Identifier Convention
+
+All invariants use stable identifiers in the form:
+
+`INV-<CATEGORY>-<NUMBER>`
+
+Example:
+INV-SIGN-001
+INV-PIPE-001
+
+These identifiers are referenced by:
+
+- work items
+- agent roles
+- pull requests
+- code comments
+
+---
+
 ## Protocol authority invariants
 
 ### INV-AUTHORITY-001
