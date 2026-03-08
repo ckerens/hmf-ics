@@ -288,32 +288,81 @@ impl EnvelopeBuilder<Set, Set, Set, Set> {
     }
 }
 
+/// Validates envelope-level structural and security-field invariants.
+///
+/// This function enforces the requirements that can be checked from the envelope
+/// fields alone, without receiver-side state or cryptographic key material.
+/// This function implements the current envelope-level structural and security-field
+/// validation subset of the receiver pipeline model described by `INV-PIPE-001`.
+///
+/// # Checks performed
+///
+/// | Check | Requirement | Invariant |
+/// |---|---|---|
+/// | `proto_ver` equals 1 | REQ-ENVELOPE-001 | INV-ENVELOPE-001 |
+/// | `ttl_ms` is non-zero (structural only; time-based freshness is not evaluated here) | REQ-ENVELOPE-003 | INV-ENVELOPE-002 |
+/// | `counter` is non-zero | REQ-ENVELOPE-004 | INV-ENVELOPE-002 |
+/// | `sig_alg` is Ed25519 | REQ-ENVELOPE-006 | INV-SIGN-001, INV-ENVELOPE-002 |
+/// | `signature` is exactly 64 bytes | REQ-ENVELOPE-007 | INV-ENVELOPE-002 |
+/// | `key_id` is non-empty | REQ-ENVELOPE-005 | INV-ENVELOPE-002 |
+/// | payload is present | — | — |
+/// | `msg_class` matches payload type | REQ-ENVELOPE-002 | INV-ENVELOPE-002 |
+///
+/// # Scope boundary
+///
+/// This function is **envelope-level structural and security-field validation only**.
+/// It is **not** a complete implementation of the receiver pipeline (`INV-PIPE-001`).
+///
+/// The following pipeline phases are **not** performed here and MUST be implemented
+/// separately by the receiver:
+///
+/// - **Freshness evaluation** — `ttl_ms` is checked to be non-zero, but actual
+///   staleness against receiver-local monotonic time is not evaluated here
+///   (REQ-TTL-002, INV-REPLAY-002).
+/// - **Signature verification** — `sig_alg` and signature byte length are validated
+///   structurally, but the Ed25519 signature is not cryptographically verified here.
+/// - **Replay protection** — monotonic counter state per `(endpoint, sender_instance)`
+///   is not checked here (REQ-REPLAY-002, INV-REPLAY-003).
+/// - **Idempotency** — not enforced here.
+/// - **Authorization** — `auth_context` is not evaluated here (INV-AUTH-004).
+/// - **Semantic execution** — no side effects occur.
+/// - **Audit emission** — no audit events are emitted.
+///
+/// # Errors
+///
+/// Returns [`ValidateError`] if any structural or security-field check fails.
+/// Validation is fail-closed: the first failing check terminates validation immediately.
 pub fn envelope_validate(env: &Envelope) -> Result<(), ValidateError> {
+    // REQ-ENVELOPE-001, INV-ENVELOPE-001: proto_ver MUST equal 1 for v1 messages.
     if env.proto_ver != EXPECTED_PROTO_VER {
         return Err(ValidateError::BadProtoVer {
             got: env.proto_ver,
             expected: EXPECTED_PROTO_VER,
         });
     }
+    // REQ-ENVELOPE-003, REQ-TTL-001, INV-ENVELOPE-002: ttl_ms MUST be non-zero.
     if env.ttl_ms == 0 {
         return Err(ValidateError::BadTtl);
     }
+    // REQ-ENVELOPE-004, INV-ENVELOPE-002: counter MUST be non-zero.
     if env.counter == 0 {
         return Err(ValidateError::BadCounter);
     }
 
-    // Require Ed25519 only (strict mode)
+    // REQ-ENVELOPE-006, INV-SIGN-001, INV-ENVELOPE-002: sig_alg MUST be Ed25519.
     let crate::envelope::SigAlg::Ed25519 = env.sig_alg else {
         return Err(ValidateError::BadSigAlg {
             got: env.sig_alg.clone(),
         });
     };
+    // REQ-ENVELOPE-007, INV-ENVELOPE-002: Ed25519 signatures MUST be exactly 64 bytes.
     if env.signature.len() != 64 {
         return Err(ValidateError::BadSignatureLen {
             expected: 64,
             got: env.signature.len(),
         });
     }
+    // REQ-ENVELOPE-005, INV-ENVELOPE-002: key_id MUST be non-empty.
     if env.key_id.is_empty() {
         return Err(ValidateError::BadKeyId);
     }
@@ -327,6 +376,7 @@ pub fn envelope_validate(env: &Envelope) -> Result<(), ValidateError> {
         Payload::Engineering(_) => (MsgClass::Engineering, "engineering"),
     };
 
+    // REQ-ENVELOPE-002, INV-ENVELOPE-002: msg_class MUST match the payload type.
     if env.msg_class != expected {
         return Err(ValidateError::MsgClassMismatch {
             msg_class: env.msg_class.clone(),
