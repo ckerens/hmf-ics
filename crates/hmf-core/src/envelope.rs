@@ -333,31 +333,36 @@ impl EnvelopeBuilder<Set, Set, Set, Set> {
 /// Returns [`ValidateError`] if any structural or security-field check fails.
 /// Validation is fail-closed: the first failing check terminates validation immediately.
 pub fn envelope_validate(env: &Envelope) -> Result<(), ValidateError> {
+    // REQ-ENVELOPE-001, INV-ENVELOPE-001: proto_ver MUST equal 1 for v1 messages.
     if env.proto_ver != EXPECTED_PROTO_VER {
         return Err(ValidateError::BadProtoVer {
             got: env.proto_ver,
             expected: EXPECTED_PROTO_VER,
         });
     }
+    // REQ-ENVELOPE-003, REQ-TTL-001, INV-ENVELOPE-002: ttl_ms MUST be non-zero.
     if env.ttl_ms == 0 {
         return Err(ValidateError::BadTtl);
     }
+    // REQ-ENVELOPE-004, INV-ENVELOPE-002: counter MUST be non-zero.
     if env.counter == 0 {
         return Err(ValidateError::BadCounter);
     }
 
-    // Require Ed25519 only (strict mode)
+    // REQ-ENVELOPE-006, INV-SIGN-001, INV-ENVELOPE-002: sig_alg MUST be Ed25519.
     let crate::envelope::SigAlg::Ed25519 = env.sig_alg else {
         return Err(ValidateError::BadSigAlg {
             got: env.sig_alg.clone(),
         });
     };
+    // REQ-ENVELOPE-007, INV-ENVELOPE-002: Ed25519 signatures MUST be exactly 64 bytes.
     if env.signature.len() != 64 {
         return Err(ValidateError::BadSignatureLen {
             expected: 64,
             got: env.signature.len(),
         });
     }
+    // REQ-ENVELOPE-005, INV-ENVELOPE-002: key_id MUST be non-empty.
     if env.key_id.is_empty() {
         return Err(ValidateError::BadKeyId);
     }
@@ -371,6 +376,7 @@ pub fn envelope_validate(env: &Envelope) -> Result<(), ValidateError> {
         Payload::Engineering(_) => (MsgClass::Engineering, "engineering"),
     };
 
+    // REQ-ENVELOPE-002, INV-ENVELOPE-002: msg_class MUST match the payload type.
     if env.msg_class != expected {
         return Err(ValidateError::MsgClassMismatch {
             msg_class: env.msg_class.clone(),
